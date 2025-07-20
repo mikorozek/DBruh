@@ -47,6 +47,12 @@ pub struct RowOperation {
     pub timestamp: u64,
 }
 
+#[derive(Clone, Default)]
+pub struct RowState {
+    pub row_snapshot: HashMap<String, DataValue>,
+    pub operations: Vec<RowOperation>,
+}
+
 impl PartialEq for RowOperation {
     fn eq(&self, other: &Self) -> bool {
         self.timestamp == other.timestamp

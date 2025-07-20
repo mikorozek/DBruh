@@ -4,10 +4,10 @@ use std::{
     path::PathBuf,
 };
 
-use dbruh_types::{ColumnDefinition, RowOperation, TableSchema};
+use dbruh_types::{ColumnDefinition, RowOperation, RowState, TableSchema};
 
 pub struct Database {
-    memtables: HashMap<String, BTreeMap<Vec<u8>, Vec<RowOperation>>>,
+    memtables: HashMap<String, BTreeMap<Vec<u8>, RowState>>,
     database_path: PathBuf,
     merge_interval: i32,
     memtable_size: i32,
@@ -77,12 +77,13 @@ impl Database {
         Ok(schema)
     }
 
-    pub fn write(
+    pub fn put(
         &mut self,
         table_name: &str,
         primary_key: &Vec<u8>,
         row_op: &RowOperation,
     ) -> Result<(), String> {
+        // TODO: Add handling of multithreading
         let btree_map = match self.memtables.get_mut(table_name) {
             Some(val) => val,
             None => {
@@ -92,8 +93,8 @@ impl Database {
                 ));
             }
         };
-        let row: &mut Vec<RowOperation> = btree_map.entry(primary_key.clone()).or_default();
-        row.push(row_op.clone());
+        let row: &mut RowState = btree_map.entry(primary_key.clone()).or_default();
+        row.operations.push(row_op.clone());
         Ok(())
     }
 }
